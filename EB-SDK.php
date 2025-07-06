@@ -50,6 +50,17 @@ class EventBriteSDK
     // Fetch events by organization ID
     public function getEventsByOrganization($organizationId, $params = [])
     {
+        // Ensure 'status' is 'live' to fetch active concerts
+        $params['status'] = 'live';
+        // Ensure 'expand' includes 'venue' to get location details
+        if (isset($params['expand'])) {
+            if (strpos($params['expand'], 'venue') === false) {
+                $params['expand'] .= ',venue';
+            }
+        } else {
+            $params['expand'] = 'venue';
+        }
+
         $cacheKey = md5("org_{$organizationId}_" . serialize($params));
         $cacheFile = sys_get_temp_dir() . "/eventbrite_cache_{$cacheKey}.json";
         $cacheTtl = 300; // cache for 5 minutes
@@ -57,15 +68,42 @@ class EventBriteSDK
         if (file_exists($cacheFile) && (filemtime($cacheFile) + $cacheTtl > time())) {
             $data = file_get_contents($cacheFile);
             if ($data !== false) {
-                return json_decode($data, true);
+                $decoded_data = json_decode($data, true);
+                // Ensure the cached data is not an error response from a previous failed attempt
+                if (isset($decoded_data['events'])) {
+                    return $decoded_data;
+                }
             }
         }
         try {
+            // The endpoint already returns id and name by default.
+            // Location is included via venue expansion.
             $response = $this->request("organizations/{$organizationId}/events/", $params);
+
+            // Filter and structure the events data if necessary
+            // For now, we assume the API returns id, name, and venue (for location)
+            // in a usable format within the 'events' array.
+            // If specific fields are needed, further processing can be added here.
+            // Example:
+            // $filteredEvents = [];
+            // if (isset($response['events'])) {
+            //     foreach ($response['events'] as $event) {
+            //         $filteredEvents[] = [
+            //             'id' => $event['id'],
+            //             'name' => $event['name']['text'], // Assuming name is in text field
+            //             'location' => isset($event['venue']['address']['localized_address_display']) ? $event['venue']['address']['localized_address_display'] : 'N/A',
+            //         ];
+            //     }
+            //     $response['events'] = $filteredEvents; // Replace events with filtered ones
+            // }
+
             file_put_contents($cacheFile, json_encode($response));
             return $response;
         } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
+            // Cache the error response to avoid repeated failing calls for a short period
+            $errorResponse = ['error' => $e->getMessage()];
+            file_put_contents($cacheFile, json_encode($errorResponse)); // Cache error for a shorter time or handle differently
+            return $errorResponse;
         }
     }
 }
