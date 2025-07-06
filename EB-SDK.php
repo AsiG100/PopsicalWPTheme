@@ -48,9 +48,13 @@ class EventBriteSDK
     }
 
     // Fetch events by organization ID
-    public function getEventsByOrganization($organizationId, $params = [])
+    public function getEventsByOrganization($organizationId, $params = [], $status = null)
     {
-        $cacheKey = md5("org_{$organizationId}_" . serialize($params));
+        if ($status) {
+            $params['status'] = $status;
+        }
+
+        $cacheKey = md5("org_{$organizationId}_" . serialize($params) . "_status_{$status}");
         $cacheFile = sys_get_temp_dir() . "/eventbrite_cache_{$cacheKey}.json";
         $cacheTtl = 300; // cache for 5 minutes
 
