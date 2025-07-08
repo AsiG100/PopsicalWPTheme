@@ -26,7 +26,6 @@ class EventBriteSDK
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Authorization: Bearer ' . $this->token,
-            'Content-Type: application/json'
         ]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -62,7 +61,7 @@ class EventBriteSDK
         }
 
         $cacheKey = md5("org_{$organizationId}_" . serialize($params));
-        $cacheFile = sys_get_temp_dir() . "/eventbrite_cache_{$cacheKey}.json";
+        $cacheFile = "/eventbrite_cache_{$cacheKey}.json";
         $cacheTtl = 300; // cache for 5 minutes
 
         if (file_exists($cacheFile) && (filemtime($cacheFile) + $cacheTtl > time())) {
@@ -107,3 +106,10 @@ class EventBriteSDK
         }
     }
 }
+// Looing for .env at the root directory
+$token = 'B3VSAB7PW6JDAA7PVPPN'; // Replace with your Eventbrite API token
+$org_id = '2600432847471';
+$sdk = new EventBriteSDK($token);
+// Parameters for fetching events (status and expand are handled by the SDK)
+$params = [];
+$response = $sdk->getEventsByOrganization($org_id, $params);

@@ -1,7 +1,7 @@
 <?php
 /* Template Name: Concerts Landing Page */
 
-get_header();
+// get_header();
 
 // Load environment variables from .env file
 // Note: In a real WordPress environment, this might be handled differently,
@@ -77,7 +77,9 @@ require_once __DIR__ . '/EB-SDK.php'; // Ensure EB-SDK.php is loaded
 </style>
 
 <div class="concerts-page-container">
-    <h1 class="concerts-title"><?php echo get_the_title() ? esc_html(get_the_title()) : 'Upcoming Concerts'; ?></h1>
+    <h1 class="concerts-title"><?php 
+    'Upcoming Concerts'; 
+    ?></h1>
 
     <div class="concerts-list" id="concerts-list">
         <?php
@@ -92,6 +94,7 @@ require_once __DIR__ . '/EB-SDK.php'; // Ensure EB-SDK.php is loaded
                 // Parameters for fetching events (status and expand are handled by the SDK)
                 $params = [];
                 $response = $sdk->getEventsByOrganization($org_id, $params);
+                die('Debugging response: ' . print_r($response, true)); // Debugging line, can be removed later
 
                 if (isset($response['error'])) {
                     echo '<p>Error fetching events: ' . esc_html($response['error']) . '</p>';
@@ -182,4 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php get_footer(); ?>
+<?php 
+// get_footer(); 
+?>
