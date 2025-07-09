@@ -61,7 +61,7 @@ class EventBriteSDK
         }
 
         $cacheKey = md5("org_{$organizationId}_" . serialize($params));
-        $cacheFile = "/eventbrite_cache_{$cacheKey}.json";
+        $cacheFile = "./cache/eventbrite_cache_{$cacheKey}.json";
         $cacheTtl = 300; // cache for 5 minutes
 
         if (file_exists($cacheFile) && (filemtime($cacheFile) + $cacheTtl > time())) {
@@ -79,30 +79,37 @@ class EventBriteSDK
             // Location is included via venue expansion.
             $response = $this->request("organizations/{$organizationId}/events/", $params);
 
-            // Filter and structure the events data if necessary
-            // For now, we assume the API returns id, name, and venue (for location)
-            // in a usable format within the 'events' array.
-            // If specific fields are needed, further processing can be added here.
-            // Example:
-            // $filteredEvents = [];
-            // if (isset($response['events'])) {
-            //     foreach ($response['events'] as $event) {
-            //         $filteredEvents[] = [
-            //             'id' => $event['id'],
-            //             'name' => $event['name']['text'], // Assuming name is in text field
-            //             'location' => isset($event['venue']['address']['localized_address_display']) ? $event['venue']['address']['localized_address_display'] : 'N/A',
-            //         ];
-            //     }
-            //     $response['events'] = $filteredEvents; // Replace events with filtered ones
-            // }
-
-            file_put_contents($cacheFile, json_encode($response));
-            return $response;
+            // Rearrange response to array of dicts with id, name, and location
+            $filteredEvents = [];
+            if (isset($response['events'])) {
+                foreach ($response['events'] as $event) {
+                    $filteredEvents[] = [
+                        'id' => isset($event['series_id']) ? $event['series_id'] : $event['id'] ,
+                        'name' => isset($event['name']['text']) ? $event['name']['text'] : '',
+                        'location' => [
+                            'address' => isset($event['venue']['address']['localized_address_display']) ? $event['venue']['address']['localized_address_display'] : 'N/A',
+                            'latitude' => isset($event['venue']['latitude']) ? $event['venue']['latitude'] : null,
+                            'longitude' => isset($event['venue']['longitude']) ? $event['venue']['longitude'] : null,
+                        ],
+                    ];
+                }
+            }
+            
+            file_put_contents($cacheFile, json_encode($filteredEvents));
+            return $filteredEvents;
         } catch (Exception $e) {
-            // Cache the error response to avoid repeated failing calls for a short period
-            $errorResponse = ['error' => $e->getMessage()];
-            file_put_contents($cacheFile, json_encode($errorResponse)); // Cache error for a shorter time or handle differently
-            return $errorResponse;
+            // Log the error to a file in the cache folder
+            $logFile = "./cache/eventbrite_error.log";
+            $logMessage = date('Y-m-d H:i:s') . " - Error fetching events for org {$organizationId}: " . $e->getMessage() . PHP_EOL;
+            file_put_contents($logFile, $logMessage, FILE_APPEND);
+
+            // Return the previously cached array if available
+            if (isset($decoded_data) && isset($decoded_data['events'])) {
+                return $decoded_data;
+            }
+
+            // If no valid cache, return an empty array or error structure
+            return ['error' => $e->getMessage()];
         }
     }
 }

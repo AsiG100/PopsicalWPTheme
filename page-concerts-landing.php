@@ -1,33 +1,9 @@
 <?php
 /* Template Name: Concerts Landing Page */
 
+require_once __DIR__ . '/main.php';
+
 // get_header();
-
-// Load environment variables from .env file
-// Note: In a real WordPress environment, this might be handled differently,
-// e.g., via wp-config.php or a plugin. For this context, we assume .env is readable.
-if (file_exists(__DIR__ . '/.env')) {
-    $dotenv = fopen(__DIR__ . '/.env', 'r');
-    if ($dotenv) {
-        while (($line = fgets($dotenv)) !== false) {
-            $line = trim($line);
-            if ($line && strpos($line, '=') !== false && substr($line, 0, 1) !== '#') {
-                list($name, $value) = explode('=', $line, 2);
-                $name = trim($name);
-                $value = trim($value);
-                // Remove surrounding quotes if any
-                if (substr($value, 0, 1) == '"' && substr($value, -1) == '"') {
-                    $value = substr($value, 1, -1);
-                }
-                putenv(sprintf('%s=%s', $name, $value));
-                $_ENV[$name] = $value;
-            }
-        }
-        fclose($dotenv);
-    }
-}
-
-require_once __DIR__ . '/EB-SDK.php'; // Ensure EB-SDK.php is loaded
 
 ?>
 
@@ -91,23 +67,25 @@ require_once __DIR__ . '/EB-SDK.php'; // Ensure EB-SDK.php is loaded
         } else {
             try {
                 $sdk = new EventBriteSDK($token);
+                $geo = new Geo();
                 // Parameters for fetching events (status and expand are handled by the SDK)
                 $params = [];
-                $response = $sdk->getEventsByOrganization($org_id, $params);
-                die('Debugging response: ' . print_r($response, true)); // Debugging line, can be removed later
+                $events = $sdk->getEventsByOrganization($org_id, $params);
+                $events_by_counties = $geo->assign_events_to_counties($events);
+                
+                // Pull the events from the county in the utm
+                $utm_county = $_GET['utm_county'] ?? 'LA';
+                if ($utm_county && isset($events_by_counties[$utm_county])) {
+                    $events = $events_by_counties[$utm_county];
+                }
 
                 if (isset($response['error'])) {
                     echo '<p>Error fetching events: ' . esc_html($response['error']) . '</p>';
-                } elseif (isset($response['events']) && !empty($response['events'])) {
-                    foreach ($response['events'] as $event) {
-                        $event_id = esc_attr($event['id']);
-                        $event_name = esc_html($event['name']['text']);
-                        $location = 'Location not available';
-                        if (isset($event['venue']['address']['localized_address_display'])) {
-                            $location = esc_html($event['venue']['address']['localized_address_display']);
-                        } elseif (isset($event['venue']['name'])) {
-                            $location = esc_html($event['venue']['name']);
-                        }
+                } elseif (isset($events) && !empty($events)) {
+                    foreach ($events as $event) {
+                        $event_id = $event['id'];
+                        $event_name = $event['name'];
+                        $location = $event['location']['address'] ?? 'Location not available';
 
                         echo '<div class="concert-item" data-event-id="' . $event_id . '">';
                         echo '<h2>' . $event_name . '</h2>';
