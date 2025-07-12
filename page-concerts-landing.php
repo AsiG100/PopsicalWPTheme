@@ -1,16 +1,12 @@
 <?php
 /* Template Name: Concerts Landing Page */
 
-require_once __DIR__ . '/main.php'; // Assuming main.php handles EventBriteSDK and Geo class loading
+require_once __DIR__ . '/main.php';
 
-// get_header(); // Assuming this would typically include WordPress header stuff
+get_header();
 
 // Path to CSS file
 $css_file_path = get_stylesheet_directory_uri() . '/concerts-landing-style.css';
-// Fallback for non-WordPress context if necessary
-// if (!function_exists('get_stylesheet_directory_uri')) {
-//     $css_file_path = './concerts-landing-style.css'; // Adjust as needed
-// }
 
 // Initialize variables for event data
 $token = getenv('EVENTBRITE_TOKEN') ?: (isset($_ENV['EVENTBRITE_TOKEN']) ? $_ENV['EVENTBRITE_TOKEN'] : null);
@@ -21,7 +17,6 @@ $current_event_name = "Popsical's Live Concert";
 $current_event_date = "Date To Be Announced";
 $current_event_time = "Time To Be Announced";
 $current_event_location_name = "Venue To Be Announced";
-$current_event_location_address = "Location To Be Announced";
 $current_event_location_map_link = "#";
 $current_event_ticket_link = "#eventbrite-widget-area"; // Default link to the widget area on the same page
 $current_event_id_for_widget = null; // This will hold the ID of the event for the CTA button
@@ -54,30 +49,13 @@ if (!$token || !$org_id) {
             }
         }
 
-        $events_by_counties = $geo->assign_events_to_counties($all_organization_events);
+        $events_by_counties = $geo->get_counties_per_events($all_organization_events);
 
-        $utm_county = $_GET['utm_county'] ?? null;
-        $query_event_id = $_GET['event_id'] ?? null;
+        $utm_county = $_GET['utm_county'] ?? 'LA';
 
-        $featured_event = null;
-        $local_tz_string = get_option('timezone_string', 'America/Los_Angeles');
+        $featured_event = $events_by_counties[$utm_county][0];
+        $local_tz_string = get_option('timezone_string') ?: 'America/Los_Angeles';
         $local_tz = new DateTimeZone($local_tz_string);
-
-
-        if ($query_event_id) {
-            foreach ($all_organization_events as $event) {
-                if ($event['id'] == $query_event_id) {
-                    $featured_event = $event;
-                    $utm_county = $geo->get_county_for_event($event);
-                    break;
-                }
-            }
-        } elseif ($utm_county && isset($events_by_counties[$utm_county]) && !empty($events_by_counties[$utm_county])) {
-            $featured_event = $events_by_counties[$utm_county][0];
-        } elseif (!empty($all_organization_events)) {
-            $featured_event = $all_organization_events[0];
-            $utm_county = $geo->get_county_for_event($featured_event);
-        }
 
         if ($featured_event) {
             $current_event_id_for_widget = $featured_event['id'];
@@ -88,8 +66,8 @@ if (!$token || !$org_id) {
                 $current_event_date = $event_start_datetime->format('F j, Y');
                 $current_event_time = $event_start_datetime->format('g:i A T');
             }
-            $current_event_location_name = $featured_event['venue']['name'] ?? ($featured_event['venue']['resource_uri'] ? 'Venue details loading...' : $current_event_location_name);
-            $current_event_location_address = $featured_event['venue']['address']['localized_address_display'] ?? $current_event_location_address;
+            $current_event_location_name = $featured_event['location']['name'] ?? '';
+            $current_event_location_address = $featured_event['location']['address'] ?? '';
 
             if (isset($featured_event['venue']['latitude'], $featured_event['venue']['longitude']) && $featured_event['venue']['latitude'] && $featured_event['venue']['longitude']) {
                  $current_event_location_map_link = "https://www.google.com/maps/search/?api=1&query=" . $featured_event['venue']['latitude'] . "," . $featured_event['venue']['longitude'];
@@ -141,10 +119,10 @@ $page_title .= " - Popsical";
 $theme_img_path = function_exists('get_stylesheet_directory_uri') ? get_stylesheet_directory_uri() . '/images/' : './images/';
 $placeholder_large = $theme_img_path . 'event-placeholder-large.jpg';
 $gallery_placeholders = [
-    $theme_img_path . 'gallery-placeholder-1.jpg',
-    $theme_img_path . 'gallery-placeholder-2.jpg',
-    $theme_img_path . 'gallery-placeholder-3.jpg',
-    $theme_img_path . 'gallery-placeholder-4.jpg',
+    $theme_img_path . 'gallery-image-1.jpg',
+    $theme_img_path . 'gallery-image-2.jpg',
+    $theme_img_path . 'gallery-image-3.jpg',
+    $theme_img_path . 'gallery-image-4.jpg',
 ];
 
 ?>
@@ -177,8 +155,8 @@ $gallery_placeholders = [
         <p class="event-date-location">
             <?php echo esc_html($current_event_date); ?> - <?php echo esc_html($current_event_time); ?><br>
             <?php echo esc_html($current_event_location_name); ?>
-            <?php if ($current_event_location_address !== 'Location To Be Announced' && $current_event_location_address !== 'Online Event or Address TBD' && $current_event_location_address !== $current_event_location_name): ?>
-                 | <?php echo esc_html($current_event_location_address); ?>
+            <?php if ($current_event_location_address): ?>
+                | <?php echo esc_html($current_event_location_address); ?>
             <?php endif; ?>
             <br>
             <?php if ($current_event_location_map_link !== '#'): ?>
@@ -195,27 +173,42 @@ $gallery_placeholders = [
 
     <main class="main-content-area">
         <section class="section about-event">
-            <img src="<?php echo esc_url($placeholder_large); ?>" alt="Popsical Event Highlight" class="event-highlight-image">
-            <h2 class="section-title">🎶 A Classical Concert Designed For the Entire Family</h2>
-            <p>Welcome to Popsical—a live string quartet concert where kids can play, move, and explore while beautiful music fills the room!</p>
-            <p>This is not your average sit-still show. At Popsical, little ones are free to be themselves with puzzles, trains, and toys—all while enjoying real, world-class musicians up close.</p>
+            <div class="about-event-flex">
+            <div class="about-event-text-col">
+                <?php
+                // Get the WordPress page content
+                if (have_posts()) :
+                    while (have_posts()) : the_post();
+                        the_content();
+                    endwhile;
+                endif;
+                ?>
+            </div>    
+            <div class="about-event-image-col">
+                <img src="<?php echo esc_url($placeholder_large); ?>" alt="Popsical Event Highlight" class="event-highlight-image">
+            </div>
+            </div>
         </section>
 
         <section class="section special-features">
-            <h2 class="section-title">🧡 Here’s what makes Popsical special</h2>
-            <ul>
-                <li>🎻 Live Music — Performed by professional string players, featuring classical favorites and playful tunes.</li>
-                <li>🧸 Kid-First Environment — Wiggles and whispers are welcome.</li>
-                <li>🚂 Playtime Meets Performance — Toys, musical coloring pages, puzzles, and quiet activities for hands-on listening.</li>
-                <li>🎥 Colorful Visuals — A big screen brings the music to life with playful imagery.</li>
-                <li>👪 No Stress for Parents — Come as you are and enjoy the experience—no shushing required.</li>
-            </ul>
-            <p class="text-center">🎟️ Tickets are going fast—grab yours today!<br>Come see why families are calling Popsical their new favorite way to do classical. 💫</p>
-            <p class="text-center"><small>Refund policy: tickets can be exchanged for another event.<br>*Children under 10 must be accompanied by an adult.</small></p>
+            <div class="special-features-video">
+                <video controls autoplay muted loop class="special-features-video">
+                    <source src="<?php echo esc_url($theme_img_path . 'testimonial-popsical-video.mp4'); ?>" type="video/mp4">
+                    Your browser does not support the video tag.    
+                </video>
+            </div>
+            <div class="special-features-text">
+                <?php
+                // Output the "special_features" custom field if available, otherwise fallback to default content
+                $special_features = get_field('special_features');
+                if ($special_features) {
+                    echo $special_features;
+                } 
+                ?>
+            </div>
         </section>
 
         <section class="section media-gallery-section">
-            <h2 class="section-title">Gallery</h2>
             <div class="media-gallery">
                 <?php foreach($gallery_placeholders as $index => $img_src): ?>
                 <div class="media-item"><img src="<?php echo esc_url($img_src); ?>" alt="Gallery Image <?php echo $index + 1; ?>"></div>
@@ -317,44 +310,22 @@ $gallery_placeholders = [
                 <?php endforeach; ?>
             </div>
             <?php
-            $concerts_page_url = function_exists('get_permalink') && function_exists('get_page_by_path') ? get_permalink(get_page_by_path('concerts')) : '';
-            if ($concerts_page_url && is_array($all_organization_events) && count($all_organization_events) > (count($other_concerts_to_list) + ($featured_event ? 1:0)) ):
+            // Get the URL of the "Concerts" page by its slug
+            $concerts_page = get_page_by_path('concerts');
+            $concerts_page_url = $concerts_page ? get_permalink($concerts_page->ID) : '/concerts/';
+            if (
+                $concerts_page_url && is_array($all_organization_events) && 
+                count($all_organization_events) > (count($other_concerts_to_list) + ($featured_event ? 1:0)) 
+                ):
             ?>
-            <div class="all-concerts-link-container">
-                <a href="<?php echo esc_url($concerts_page_url); ?>" class="all-concerts-link">All Concerts</a>
-            </div>
+                <div class="all-concerts-link-container">
+                    <a href="<?php echo esc_url($concerts_page_url); ?>" class="all-concerts-link">All Concerts</a>
+                </div>
             <?php endif; ?>
         </section>
         <?php endif; ?>
 
-        <section class="section mailing-list-section">
-            <h2>Subscribe to our Mailing List</h2>
-            <p>Can’t make it to our concerts? Sign up for our announcement e-mail list and be the first to know about upcoming offerings!</p>
-            <form action="#" method="post" class="mailing-list-form">
-                <input type="text" name="first_name" placeholder="First Name" required>
-                <input type="email" name="email" placeholder="Email Address" required>
-                <button type="submit">Subscribe</button>
-            </form>
-        </section>
     </main>
-
-    <footer class="concerts-footer">
-        <div class="social-media-icons">
-            <a href="https://facebook.com/popsicalmusic" target="_blank" rel="noopener" aria-label="Facebook">FB</a>
-            <a href="https://instagram.com/popsicalmusic.concerts" target="_blank" rel="noopener" aria-label="Instagram">IG</a>
-            <a href="https://youtube.com/@PopsicalMusic" target="_blank" rel="noopener" aria-label="YouTube">YT</a>
-        </div>
-        <div class="footer-links">
-            <a href="<?php echo esc_url(home_url('/')); ?>">HOME</a>
-            <?php if($concerts_page_url): ?>
-                <a href="<?php echo esc_url($concerts_page_url); ?>">CONCERTS</a>
-            <?php endif; ?>
-            <a href="<?php echo esc_url(home_url('/about/')); // Assuming slug 'about' ?>">ABOUT</a>
-            <a href="<?php echo esc_url(home_url('/articles/')); // Assuming slug 'articles' ?>">ARTICLES</a>
-            <a href="<?php echo esc_url(home_url('/contact/')); // Assuming slug 'contact' ?>">CONTACT</a>
-        </div>
-        <p class="copyright-text">&copy; <?php echo date('Y'); ?> Popsical. All Rights Reserved.</p>
-    </footer>
 
 </div><!-- .concerts-page-container -->
 
@@ -463,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php 
-wp_footer();
+get_footer()
 ?>
 </body>
 </html>

@@ -11,7 +11,6 @@ body.concerts-landing {
 }
 
 .concerts-page-container {
-    max-width: 1100px; /* Similar to reference page width */
     margin: 0 auto;
     padding: 0; /* Container itself has no padding, sections will handle it */
     background-color: #fff;
@@ -34,7 +33,7 @@ body.concerts-landing {
 .concert-header {
     text-align: center;
     padding: 50px 20px 30px 20px; /* More padding top */
-    background-color: #f8f8f8; /* Light gray, similar to reference's subtle header bg */
+    background-color: #D56B13; /* Light gray, similar to reference's subtle header bg */
     color: #333; /* Text color on light bg */
     border-bottom: 1px solid #e0e0e0;
 }
@@ -44,13 +43,13 @@ body.concerts-landing {
     margin-top: 0;
     margin-bottom: 15px;
     font-weight: 700; /* Bold */
-    color: #222; /* Darker title */
+    color: white; /* Darker title */
 }
 
 .concert-header .event-date-location {
     font-size: 1.15em; /* Adjusted */
     margin-bottom: 25px;
-    color: #555; /* Softer than pure black */
+    color: white; /* Softer than pure black */
     line-height: 1.5;
 }
 .concert-header .event-date-location a {
@@ -91,11 +90,42 @@ body.concerts-landing {
 
 /* Main Content Section Styles */
 .main-content-area {
-    padding: 30px 15px; /* Consistent padding for mobile */
+    padding: 30px 0; /* Consistent padding for mobile */
+}
+
+.about-event-flex {
+    display: flex;
+    flex-direction: row; /* Side by side */
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px; /* Space between the two divs */
+    margin-bottom: 30px;
+}
+.about-event-flex img {
+    width: 100%; /* Full width on small screens */
+    max-width: 600px; /* Limit max width */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Subtle shadow */
+    margin-bottom: 20px; /* Space below image */
+}
+
+.special-features {
+    display: flex;
+    flex-direction: row; /* Side by side */
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px; /* Space between the two divs */
+    margin-bottom: 30px;
+}
+.special-features-video {
+    flex: 1; /* Take equal space */
+    max-width: 600px; /* Limit max width */
+    margin-bottom: 20px; /* Space below video */
 }
 
 .section {
-    margin-bottom: 50px; /* Increased spacing between sections */
+    margin: 50px 15px; /* Increased spacing between sections */
 }
 
 .section-title {
@@ -237,8 +267,9 @@ body.concerts-landing {
 
 /* Media Gallery */
 .media-gallery-section {
-    /* background-color: #f9f9f9; */
-    /* padding-top: 1px; padding-bottom: 20px; /* Adjust padding to avoid title touching container edge */
+    background-color: #d467f1;
+    padding-top: 1px; padding-bottom: 20px; /* Adjust padding to avoid title touching container edge */
+    margin: 0 auto; /* Center the section */
 }
 .media-gallery {
     display: grid;

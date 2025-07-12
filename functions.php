@@ -29,8 +29,8 @@ add_action(  'wp_enqueue_scripts', 'sonaar_child_enqueue_styles' );
 // add custom layout to wordpress
 function sonaar_child_custom_layouts( $layouts ) {
     $layouts['sonaar-child'] = array(
-        'name' => 'Sonaar Child',
-        'description' => 'A custom layout for the Sonaar child theme.',
+        'name' => 'Sonaar Popsical Child',
+        'description' => 'A custom layout for the Sonaar Popsical child theme.',
         'template' => 'sonaar-child-template.php',
     );
     return $layouts;
@@ -39,8 +39,7 @@ function sonaar_child_custom_layouts( $layouts ) {
 add_filter( 'theme_layouts', 'sonaar_child_custom_layouts' );
 
 // new custom functions for the child theme
-$page_concerts_landing = get_stylesheet_directory() . '/page-concerts-landing.php';
-$eb_sdk = get_stylesheet_directory() . '/EB-SDK.php';
+$page_concerts_landing = get_stylesheet_directory() . '/main.php';
 
 if (file_exists($page_concerts_landing)) {
     require_once $page_concerts_landing;

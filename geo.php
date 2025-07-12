@@ -38,7 +38,7 @@ class Geo
      * @param array $events Array of events. Each event should have a 'location' attribute with 'lat' and 'lng'.
      * @return array Map of county names to arrays of events inside them.
      */
-    public static function assign_events_to_counties(array $events)
+    public static function get_counties_per_events(array $events)
     {
         $county_map = [];
 
