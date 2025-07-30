@@ -90,7 +90,12 @@ class EventBriteSDK
                             'address' => isset($event['venue']['address']['localized_address_display']) ? $event['venue']['address']['localized_address_display'] : 'N/A',
                             'latitude' => isset($event['venue']['latitude']) ? $event['venue']['latitude'] : null,
                             'longitude' => isset($event['venue']['longitude']) ? $event['venue']['longitude'] : null,
+                            'name' => isset($event['venue']['name']) ? $event['venue']['name'] : 'N/A',
                         ],
+                        'date' => [
+                            'utc' => isset($event['start']['utc']) ? $event['start']['utc'] : null,
+                            'local' => isset($event['start']['local']) ? $event['start']['local'] : null,
+                        ]
                     ];
                 }
             }
