@@ -61,8 +61,8 @@ class EventBriteSDK
         }
 
         $cacheKey = md5("org_{$organizationId}_" . serialize($params));
-        $cacheFile = "./cache/eventbrite_cache_{$cacheKey}.json";
-        $cacheTtl = 300; // cache for 5 minutes
+        $cacheFile = "eventbrite_cache_{$cacheKey}.json";
+        $cacheTtl = 60*60*2; // cache for 2 hours
 
         if (file_exists($cacheFile) && (filemtime($cacheFile) + $cacheTtl > time())) {
             $data = file_get_contents($cacheFile);

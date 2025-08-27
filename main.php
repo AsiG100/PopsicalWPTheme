@@ -23,6 +23,8 @@ if (file_exists(__DIR__ . '/.env')) {
     }
 }
 
+$v = '5';
+
 // load required files
 require_once __DIR__ . '/EB-SDK.php';
 require_once __DIR__ . '/geo.php';

@@ -44,6 +44,29 @@ $page_concerts_landing = get_stylesheet_directory() . '/main.php';
 if (file_exists($page_concerts_landing)) {
     require_once $page_concerts_landing;
 }
-if (file_exists($eb_sdk)) {
-    require_once $eb_sdk;
+
+function sonaar_child_replace_jquery() {
+    if (!is_admin()) {
+        wp_deregister_script('jquery');
+        wp_register_script(
+            'jquery',
+            includes_url('/js/jquery/jquery.min.js'),
+            array(),
+            null,
+            true
+        );
+        wp_enqueue_script('jquery');
+    }
 }
+add_action('wp_enqueue_scripts', 'sonaar_child_replace_jquery', 100);
+
+// Defer all JS files except jQuery
+// function sonaar_child_defer_scripts($tag, $handle, $src) {
+//     // Only defer JS files
+//     if (strpos($tag, ' src=') !== false && strpos($tag, '.js') !== false) {
+//         // Add defer attribute
+//         return str_replace(' src', ' defer src', $tag);
+//     }
+//     return $tag;
+// }
+// add_filter('script_loader_tag', 'sonaar_child_defer_scripts', 10, 3);

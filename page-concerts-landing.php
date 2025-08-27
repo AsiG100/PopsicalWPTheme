@@ -113,7 +113,7 @@ if (!$token || !$org_id) {
 
 // Determine the page title based on context
 $page_title = $current_event_name;
-if ($utm_county && !$query_event_id) {
+if ($utm_county) {
     $page_title = "Concerts in " . esc_html(strtoupper($utm_county));
 }
 $page_title .= " - Popsical";
@@ -142,9 +142,9 @@ for ($i = 1; $i <= 12; $i++) {
 
     <title><?php echo esc_html($page_title); ?></title>
 
-    <link rel="stylesheet" href="<?php echo esc_url($css_file_path); ?>" type="text/css" media="all">
-    <link rel="stylesheet" href="<?php echo esc_url($css_countdown_path); ?>" type="text/css" media="all">
-    <link rel="stylesheet" href="<?php echo esc_url($css_gallery_path); ?>" type="text/css" media="all">
+    <link rel="stylesheet" href="<?php echo esc_url($css_file_path).'?v=' . $v; ?>" type="text/css" media="all">
+    <link rel="stylesheet" href="<?php echo esc_url($css_countdown_path).'?v=' . $v; ?>" type="text/css" media="all">
+    <link rel="stylesheet" href="<?php echo esc_url($css_gallery_path).'?v=' . $v; ?>" type="text/css" media="all">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -196,7 +196,7 @@ for ($i = 1; $i <= 12; $i++) {
             <section class="section concerts-list-section">
                 <h2 class="concerts-list-title">
                     <?php
-                    if ($query_event_id && $featured_event) {
+                    if ($featured_event) {
                         echo 'Event Details';
                     } elseif ($utm_county) {
                         echo 'Upcoming Concerts in ' . esc_html(strtoupper($utm_county));
@@ -233,7 +233,7 @@ for ($i = 1; $i <= 12; $i++) {
                         $event_page_link = add_query_arg('event_id', $event_item['id'], get_permalink(get_the_ID()));
                         ?>
                         
-                        <div class="concert-item trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($item_id); ?>">
+                        <div class="concert-item">
                             <?php if ($event_datetime_obj): ?>
                             <div class="date-box">
                                 <span class="date-day"><?php echo $event_datetime_obj->format('d'); ?></span>
@@ -241,8 +241,19 @@ for ($i = 1; $i <= 12; $i++) {
                             </div>
                             <?php endif; ?>
                             <h2><?php echo esc_html($item_name); ?></h2>
-                            <p class="concert-location"><?php echo esc_html($item_display_location); ?></p>
-                            <a href="<?php echo esc_url($event_page_link); ?>" class="details-button">Reserve Your Spot</a>
+                            <?php
+                            // Build Google Maps link if possible
+                            $map_link = '#';
+                            if (isset($event_item['venue']['latitude'], $event_item['venue']['longitude']) && $event_item['venue']['latitude'] && $event_item['venue']['longitude']) {
+                                $map_link = "https://www.google.com/maps/search/?api=1&query=" . $event_item['venue']['latitude'] . "," . $event_item['venue']['longitude'];
+                            } elseif ($item_location_address !== "Location TBD" && $item_location_address !== 'Online Event or Address TBD') {
+                                $map_link = "https://www.google.com/maps/search/?api=1&query=" . urlencode($item_display_location);
+                            }
+                            ?>
+                            <a href="<?php echo esc_url($map_link); ?>" class="concert-location" target="_blank" rel="noopener">
+                                <?php echo esc_html($item_display_location); ?>
+                            </a>
+                            <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($item_id); ?>">Reserve Your Spot</a>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -330,7 +341,7 @@ for ($i = 1; $i <= 12; $i++) {
                     }
                     $event_page_link = add_query_arg('event_id', $other_event_id, get_permalink(get_the_ID()));
                     ?>
-                    <div class="other-concert-item trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($other_event_id); ?>">
+                    <div class="other-concert-item " data-event-id="<?php echo esc_attr($other_event_id); ?>">
                         <?php if ($other_event_datetime_obj): ?>
                         <div class="date-box">
                             <span class="date-day"><?php echo $other_event_datetime_obj->format('d'); ?></span>
@@ -338,8 +349,19 @@ for ($i = 1; $i <= 12; $i++) {
                         </div>
                         <?php endif; ?>
                         <h3><?php echo esc_html($other_event_name); ?></h3>
-                        <p>@ <?php echo esc_html($other_display_loc); ?></p>
-                        <a href="<?php echo esc_url($event_page_link); ?>" class="details-button">Reserve Your Spot</a>
+                        <?php
+                        // Build Google Maps link if possible
+                        $map_link = '#';
+                        if (isset($other_event['location']['latitude'], $other_event['location']['longitude']) && $other_event['location']['latitude'] && $other_event['location']['longitude']) {
+                            $map_link = "https://www.google.com/maps/search/?api=1&query=" . $other_event['location']['latitude'] . "," . $other_event['location']['longitude'];
+                        } elseif ($other_loc_addr !== "Location TBD" && $other_loc_addr !== 'Online Event or Address TBD') {
+                            $map_link = "https://www.google.com/maps/search/?api=1&query=" . urlencode($other_display_loc);
+                        }
+                        ?>
+                        <a href="<?php echo esc_url($map_link); ?>" class="concert-location" target="_blank" rel="noopener">
+                            @ <?php echo esc_html($other_display_loc); ?>
+                        </a>
+                        <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($other_event_id); ?>">Reserve Your Spot</a>
                     </div>
                 <?php endforeach; ?>
             </div>

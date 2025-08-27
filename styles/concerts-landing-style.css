@@ -1,8 +1,14 @@
 /* concerts-landing-style.css */
 
+/* Font */
+body.page-template-page-concerts-landing,
+.concert-header,
+.concert-header .cta-button {
+    font-family: "Raleway", sans-serif;
+}
+
 /* General Body Styles */
 body.page-template-page-concerts-landing {
-    font-family: "Raleway", sans-serif;
     font-optical-sizing: auto;
     font-weight: 200;
     font-style: normal;
@@ -50,6 +56,7 @@ body.page-template-page-concerts-landing {
     margin-bottom: 15px;
     font-weight: 700; /* Bold */
     color: black; /* Darker title */
+    line-height: normal;
 }
 
 .concert-header .event-date-location {
@@ -131,6 +138,11 @@ body.page-template-page-concerts-landing {
     gap: 40px; /* Space between the two divs */
     margin-bottom: 30px;
 }
+
+.special-features-text li {
+    color: black; /* Text color */
+}
+
 .special-features-video {
     flex: 1; /* Take equal space */
     max-width: 600px; /* Limit max width */
@@ -228,7 +240,6 @@ body.page-template-page-concerts-landing {
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
-    cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     display: flex;
     flex-direction: column;
@@ -244,11 +255,13 @@ body.page-template-page-concerts-landing {
 .concert-item h2 {
     margin-top: 0;
     margin-bottom: 12px;
+    min-height: 100px;
     font-size: 1.5em; /* Slightly larger */
     color: white;
 }
 
 .concert-item .concert-location,
+.other-concert-item .concert-location,
 .concert-item .concert-date-time {
     font-size: 0.95em; /* Slightly larger */
     color: #fdc40b;
@@ -474,9 +487,6 @@ body.page-template-page-concerts-landing {
 }
 
 @media (max-width: 768px) { /* Large Mobile / Small Tablet */
-    .concerts-page-container {
-        padding: 0 10px; /* Reduce side padding for container on mobile */
-    }
     .main-content-area {
         padding: 20px 10px; /* Reduce padding for main content area */
     }
