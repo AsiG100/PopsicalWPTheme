@@ -53,7 +53,24 @@ if (!$token || !$org_id) {
 
         $utm_county = $_GET['utm_county'] ?? 'LA';
 
-        $featured_event = $events_by_counties[$utm_county][0];
+        // Find the first event in the county that is NOT sold out, otherwise fallback to the first event
+        $featured_event = null;
+        if (!empty($events_by_counties[$utm_county])) {
+            foreach ($events_by_counties[$utm_county] as $event) {
+            if (
+                !isset($event['sales_status']) ||
+                $event['sales_status'] === 'on_sale'
+            ) {
+                $featured_event = $event;
+                break;
+            }
+            }
+            // If all are sold out, just pick the first one
+            if (!$featured_event) {
+            $featured_event = $events_by_counties[$utm_county][0];
+            }
+        }
+
         $local_tz_string = get_option('timezone_string') ?: 'America/Los_Angeles';
         $local_tz = new DateTimeZone($local_tz_string);
 
@@ -90,18 +107,34 @@ if (!$token || !$org_id) {
             $events_to_list_in_main_section = []; // Ensure it's an array
         }
 
-
+       // First, add all current county's concerts (excluding featured_event if present)
         $temp_other_concerts = [];
-        if(is_array($all_organization_events)){
-            foreach ($all_organization_events as $event) {
-                if (count($temp_other_concerts) >= 4) break;
-                if ($featured_event && $event['id'] == $featured_event['id']) {
-                    continue;
-                }
-                $temp_other_concerts[] = $event;
+        $added_ids = [];
+
+        if (is_array($events_to_list_in_main_section)) {
+            foreach ($events_to_list_in_main_section as $event) {
+            $temp_other_concerts[$event['id']] = $event;
+            $added_ids[$event['id']] = true;
             }
         }
-        $other_concerts_to_list = $temp_other_concerts;
+
+        // Then, add all the rest (from all_organization_events), skipping already added events
+        if (is_array($all_organization_events)) {
+            foreach ($all_organization_events as $event) {
+            if (isset($added_ids[$event['id']])) {
+                continue;
+            }
+            // Also skip featured_event if not already skipped
+            if ($featured_event && $event['id'] == $featured_event['id']) {
+                continue;
+            }
+            $temp_other_concerts[$event['id']] = $event;
+            $added_ids[$event['id']] = true;
+            }
+        }
+
+        // Limit to 4 "other" concerts
+        $other_concerts_to_list = array_slice($temp_other_concerts, 0, 4, true);
 
     } catch (Exception $e) {
         $page_error_message = 'An unexpected error occurred: ' . esc_html($e->getMessage());
@@ -253,7 +286,18 @@ for ($i = 1; $i <= 12; $i++) {
                             <a href="<?php echo esc_url($map_link); ?>" class="concert-location" target="_blank" rel="noopener">
                                 <?php echo esc_html($item_display_location); ?>
                             </a>
-                            <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($item_id); ?>">Reserve Your Spot</a>
+                            <?php
+                            $sales_status = $event_item['sales_status'];
+                            $is_available = ($sales_status === 'on_sale');
+                            $is_sold_out = ($sales_status === 'unavailable');
+                            ?>
+                            <?php if ($is_available): ?>
+                                <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($item_id); ?>">Reserve Your Spot</a>
+                            <?php elseif ($is_sold_out): ?>
+                                <span class="details-button disabled sold-out">Sold Out</span>
+                            <?php else: ?>
+                                <span class="details-button disabled unavailable">Unavailable</span>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -361,7 +405,18 @@ for ($i = 1; $i <= 12; $i++) {
                         <a href="<?php echo esc_url($map_link); ?>" class="concert-location" target="_blank" rel="noopener">
                             @ <?php echo esc_html($other_display_loc); ?>
                         </a>
-                        <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($other_event_id); ?>">Reserve Your Spot</a>
+                        <?php
+                        $sales_status = $other_event['sales_status'];
+                        $is_available = ($sales_status === 'on_sale');
+                        $is_sold_out = ($sales_status === 'unavailable');
+                        ?>
+                        <?php if ($is_available): ?>
+                            <a href="<?php echo esc_url($event_page_link); ?>" class="details-button trigger-eventbrite-widget" data-event-id="<?php echo esc_attr($other_event_id); ?>">Reserve Your Spot</a>
+                        <?php elseif ($is_sold_out): ?>
+                            <span class="details-button disabled sold-out">Sold Out</span>
+                        <?php else: ?>
+                            <span class="details-button disabled unavailable">Unavailable</span>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
