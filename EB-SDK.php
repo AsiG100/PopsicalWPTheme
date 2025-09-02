@@ -53,11 +53,11 @@ class EventBriteSDK
         $params['status'] = 'live';
         // Ensure 'expand' includes 'venue' to get location details
         if (isset($params['expand'])) {
-            if (strpos($params['expand'], 'venue') === false) {
-                $params['expand'] .= ',venue';
+            if (strpos($params['expand'], 'venue,event_sales_status') === false) {
+                $params['expand'] .= ',venue,event_sales_status';
             }
         } else {
-            $params['expand'] = 'venue';
+            $params['expand'] = 'venue,event_sales_status';
         }
 
         $cacheKey = md5("org_{$organizationId}_" . serialize($params));
@@ -84,7 +84,7 @@ class EventBriteSDK
             if (isset($response['events'])) {
                 foreach ($response['events'] as $event) {
                     $filteredEvents[] = [
-                        'id' => isset($event['series_id']) ? $event['series_id'] : $event['id'] ,
+                        'id' => isset($event['series_id']) ? $event['series_id'] : $event['id'],
                         'name' => isset($event['name']['text']) ? $event['name']['text'] : '',
                         'location' => [
                             'address' => isset($event['venue']['address']['localized_address_display']) ? $event['venue']['address']['localized_address_display'] : 'N/A',
@@ -95,7 +95,8 @@ class EventBriteSDK
                         'date' => [
                             'utc' => isset($event['start']['utc']) ? $event['start']['utc'] : null,
                             'local' => isset($event['start']['local']) ? $event['start']['local'] : null,
-                        ]
+                        ],
+                        'sales_status' => isset($event['event_sales_status']) ? $event['event_sales_status']['sales_status'] : 'unknown',
                     ];
                 }
             }

@@ -403,6 +403,18 @@ body.page-template-page-concerts-landing {
     background-color: #b44a0d; /* Even darker on hover */
 }
 
+
+.other-concert-item .details-button.disabled, .concert-item .details-button.disabled {
+    background-color: #ccc;
+    color: #666;
+    border: 1px solid #aaa;
+    cursor: not-allowed;
+}
+
+.other-concert-item .details-button.disabled:hover, .concert-item .details-button.disabled:hover {
+    background-color: #ccc;
+}
+
 .concert-item .details-button {
     text-align: center;
     width: 150px;
