@@ -111,30 +111,20 @@ if (!$token || !$org_id) {
         $temp_other_concerts = [];
         $added_ids = [];
 
-        if (is_array($events_to_list_in_main_section)) {
-            foreach ($events_to_list_in_main_section as $event) {
-            $temp_other_concerts[$event['id']] = $event;
-            $added_ids[$event['id']] = true;
-            }
-        }
-
         // Then, add all the rest (from all_organization_events), skipping already added events
         if (is_array($all_organization_events)) {
             foreach ($all_organization_events as $event) {
-            if (isset($added_ids[$event['id']])) {
-                continue;
-            }
-            // Also skip featured_event if not already skipped
-            if ($featured_event && $event['id'] == $featured_event['id']) {
-                continue;
-            }
-            $temp_other_concerts[$event['id']] = $event;
-            $added_ids[$event['id']] = true;
+                if (isset($added_ids[$event['id']]) && $temp_other_concerts[$event['id']]['sales_status'] != 'unavailable') {
+                    continue;
+                }
+                
+                $temp_other_concerts[$event['id']] = $event;
+                $added_ids[$event['id']] = true;
             }
         }
 
         // Limit to 4 "other" concerts
-        $other_concerts_to_list = array_slice($temp_other_concerts, 0, 4, true);
+        $events_to_list_in_main_section = $other_concerts_to_list = array_slice($temp_other_concerts, 0, 4, true);
 
     } catch (Exception $e) {
         $page_error_message = 'An unexpected error occurred: ' . esc_html($e->getMessage());
